@@ -2,6 +2,7 @@ node_modules
 *.log
 /.idea
 /api
+/prototype-dist
 packages/*/dist
 .nyc_output/
 packages/*/coverage

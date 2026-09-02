@@ -1,0 +1,31 @@
+{
+  "name": "markmap-nomad",
+  "version": "0.1.0",
+  "description": "NotebookLM-style read-only mind maps from YAML",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./style.css": "./dist/style.css"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "clean": "del-cli dist tsconfig.tsbuildinfo",
+    "build:types": "tsc",
+    "build:js": "vite build",
+    "build": "del-cli dist tsconfig.tsbuildinfo && tsc && vite build"
+  },
+  "dependencies": {
+    "markmap-common": "workspace:*",
+    "markmap-view": "workspace:*",
+    "yaml": "^2.5.1"
+  }
+}

@@ -1,0 +1,132 @@
+title: NOMAD - Site Architecture Map
+colorBy: depth
+
+categories:
+  accessing:
+    label: Accessing data
+    stripe: "#2f73bd"
+    fill: "#cfe2f3"
+  learning:
+    label: Discovering and learning
+    stripe: "#76a938"
+    fill: "#d9ead3"
+  services:
+    label: Data platform and services
+    stripe: "#bf9000"
+    fill: "#fff2cc"
+  sustainability:
+    label: Sustainability
+    stripe: "#6c3bb7"
+    fill: "#d9d2e9"
+
+viewer:
+  initialExpandLevel: 2
+
+tree:
+  label: NOMAD
+  children:
+    - label: Home
+      children:
+        - label: Hero / tagline banner
+        - label: Project overview
+          children:
+            - label: Data catalog and analysis
+              category: accessing
+            - label: Processing methodologies
+              category: services
+            - label: Community building
+        - label: NOMAD's objectives
+          category: sustainability
+        - label: NOMAD code library example
+          category: services
+        - label: NOMAD test users carousel
+          children:
+            - label: Noah Parker
+            - label: Federico Delussu
+            - label: Riccardo Sbarbati
+
+    - label: About
+      children:
+        - label: Team
+          category: sustainability
+          children:
+            - label: CSSLab members
+            - label: PhD researchers
+            - label: Research assistants / staff
+        - label: Advisory committee
+          category: sustainability
+        - label: Partnerships
+          category: sustainability
+
+    - label: Data
+      category: accessing
+      children:
+        - label: Data catalog
+          children:
+            - label: Intro / mission
+            - label: Metadata fields explained
+            - label: Explore datasets
+        - label: Datasets catalog
+          children:
+            - label: Filter bar
+              children:
+                - label: Geography
+                - label: Type
+                - label: Year
+                - label: Provider
+            - label: Dataset cards
+              children:
+                - label: Provider
+                - label: Geography level
+                - label: Date
+                - label: Description
+                - label: Validation
+                - label: Data metrics
+
+    - label: Resources
+      children:
+        - label: Processing methods tab
+          category: services
+          children:
+            - label: "Pipeline stages: description and visual"
+            - label: Open-source software and toolkits
+              children:
+                - label: Tool name and description
+                - label: Tool modules and associated link
+                - label: Tool details as dropdown text
+        - label: Literature tab
+          category: learning
+          children:
+            - label: "Filter bar: keyword and topic"
+            - label: Literature catalog cards
+              children:
+                - label: Paper title
+                - label: Tags
+                - label: External paper link
+
+    - label: Research
+      category: learning
+      children:
+        - label: Research tab
+          children:
+            - label: NOMAD research papers
+            - label: Paper cards with metadata
+            - label: External publication links
+        - label: Tutorials tab
+          children:
+            - label: Tutorial header and context
+            - label: Tutorial content / steps
+            - label: Author and credits
+            - label: Related links / social
+
+    - label: Collaborate
+      children:
+        - label: Request to collaborate form
+
+    - label: Data Challenge
+      category: learning
+      children:
+        - label: 2025 Data Challenge header
+        - label: Submission deadline section
+        - label: Rules and explanation
+        - label: Previous NOMAD users

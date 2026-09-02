@@ -220,6 +220,18 @@ importers:
         specifier: ^1.6.28
         version: 1.6.28
 
+  packages/markmap-nomad:
+    dependencies:
+      markmap-common:
+        specifier: workspace:*
+        version: link:../markmap-common
+      markmap-view:
+        specifier: workspace:*
+        version: link:../markmap-view
+      yaml:
+        specifier: ^2.5.1
+        version: 2.6.1
+
   packages/markmap-render:
     dependencies:
       "@babel/runtime":

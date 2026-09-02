@@ -35,6 +35,8 @@ export const globalCSS = css;
 const SELECTOR_NODE = 'g.markmap-node';
 const SELECTOR_LINK = 'path.markmap-link';
 const SELECTOR_HIGHLIGHT = 'g.markmap-highlight';
+const CONTROL_OFFSET = 13;
+const CONTROL_RADIUS = 7;
 
 const linkShape = linkHorizontal();
 
@@ -254,13 +256,46 @@ export class Markmap {
         height: fnode.xSize,
       };
     });
+
+    const widthsByDepth = new Map<number, number>();
+    fnodes.forEach((fnode) => {
+      const { width } = fnode.data.state.rect;
+      const controlWidth = fnode.data.children?.length
+        ? CONTROL_OFFSET + CONTROL_RADIUS
+        : 0;
+      widthsByDepth.set(
+        fnode.depth,
+        Math.max(widthsByDepth.get(fnode.depth) || 0, width + controlWidth),
+      );
+    });
+
+    const xByDepth = new Map<number, number>([[0, 0]]);
+    for (
+      let depth = 1;
+      depth <= max(fnodes, (fnode) => fnode.depth)!;
+      depth += 1
+    ) {
+      xByDepth.set(
+        depth,
+        xByDepth.get(depth - 1)! +
+          (widthsByDepth.get(depth - 1) || 0) +
+          spacingHorizontal,
+      );
+    }
+    fnodes.forEach((fnode) => {
+      fnode.data.state.rect.x = xByDepth.get(fnode.depth) || 0;
+    });
+
     this.state.rect = {
       x1: min(fnodes, (fnode) => fnode.data.state.rect.x) || 0,
       y1: min(fnodes, (fnode) => fnode.data.state.rect.y) || 0,
       x2:
         max(
           fnodes,
-          (fnode) => fnode.data.state.rect.x + fnode.data.state.rect.width,
+          (fnode) =>
+            fnode.data.state.rect.x +
+            fnode.data.state.rect.width +
+            (fnode.data.children?.length ? CONTROL_OFFSET + CONTROL_RADIUS : 0),
         ) || 0,
       y2:
         max(
@@ -384,6 +419,12 @@ export class Markmap {
     });
     const mmGMerge = mmG
       .merge(mmGEnter)
+      .attr('data-node-id', (d) => `${d.payload?.id || d.state.path}`)
+      .attr('role', 'treeitem')
+      .attr('aria-level', (d) => d.state.depth)
+      .attr('aria-expanded', (d) =>
+        d.children?.length ? `${!d.payload?.fold}` : null,
+      )
       .attr('class', (d) =>
         ['markmap-node', d.payload?.fold && 'markmap-fold']
           .filter(Boolean)
@@ -429,6 +470,27 @@ export class Markmap {
           ? color(d)
           : 'var(--markmap-circle-open-bg)',
       );
+
+    const mmToggle = mmGMerge
+      .selectAll<
+        SVGPathElement,
+        INode
+      >(childSelector<SVGPathElement>('path.markmap-toggle'))
+      .data(
+        (d) => (d.children?.length ? [d] : []),
+        (d) => d.state.key,
+      );
+    const mmToggleMerge = mmToggle
+      .enter()
+      .append('path')
+      .attr('class', 'markmap-toggle')
+      .attr('fill', 'none')
+      .attr('stroke-width', 1.5)
+      .attr('stroke-linecap', 'round')
+      .attr('stroke-linejoin', 'round')
+      .attr('pointer-events', 'none')
+      .merge(mmToggle)
+      .attr('stroke', (d) => (d.payload?.fold ? '#ffffff' : color(d)));
 
     const observer = this._observer;
     const mmFo = mmGMerge
@@ -503,7 +565,7 @@ export class Markmap {
       '--markmap-max-width',
       maxWidth ? `${maxWidth}px` : (null as any),
     );
-    await new Promise(requestAnimationFrame);
+    await new Promise((resolve) => setTimeout(resolve, 0));
     // Note: d.state.rect is only available after relayout
     this._relayout();
 
@@ -559,9 +621,19 @@ export class Markmap {
     );
     this.transition(mmCircleExit).attr('r', 0).attr('stroke-width', 0);
     mmCircleMerge
-      .attr('cx', (d) => d.state.rect.width)
-      .attr('cy', (d) => d.state.rect.height + lineWidth(d) / 2);
-    this.transition(mmCircleMerge).attr('r', 6).attr('stroke-width', '1.5');
+      .attr('cx', (d) => d.state.rect.width + CONTROL_OFFSET)
+      .attr('cy', (d) => d.state.rect.height / 2);
+    this.transition(mmCircleMerge)
+      .attr('r', CONTROL_RADIUS)
+      .attr('stroke-width', 2);
+
+    mmToggleMerge.attr('d', (d) => {
+      const x = d.state.rect.width + CONTROL_OFFSET;
+      const y = d.state.rect.height / 2;
+      const direction = d.payload?.fold ? 1 : -1;
+      return `M ${x - 1.5 * direction} ${y - 2.5} L ${x + 1.5 * direction} ${y} L ${x - 1.5 * direction} ${y + 2.5}`;
+    });
+    this.transition(mmToggle.exit()).style('opacity', 0).remove();
 
     this.transition(mmFoExit).style('opacity', 0);
     mmFoMerge
@@ -573,8 +645,8 @@ export class Markmap {
       .attr('d', (d) => {
         const targetRect = getOriginTargetRect(d.target);
         const pathTarget: [number, number] = [
-          targetRect.x + targetRect.width,
-          targetRect.y + targetRect.height + lineWidth(d.target) / 2,
+          targetRect.x + targetRect.width + CONTROL_OFFSET,
+          targetRect.y + targetRect.height / 2,
         ];
         return linkShape({ source: pathTarget, target: pathTarget });
       })
@@ -582,22 +654,20 @@ export class Markmap {
       .remove();
 
     this.transition(mmPathMerge)
-      .attr('stroke', (d) => color(d.target))
+      .attr('stroke', (d) => color(d.source))
       .attr('stroke-width', (d) => lineWidth(d.target))
       .attr('d', (d) => {
         const origSource = d.source;
         const origTarget = d.target;
         const source: [number, number] = [
-          origSource.state.rect.x + origSource.state.rect.width,
-          origSource.state.rect.y +
-            origSource.state.rect.height +
-            lineWidth(origSource) / 2,
+          origSource.state.rect.x +
+            origSource.state.rect.width +
+            CONTROL_OFFSET,
+          origSource.state.rect.y + origSource.state.rect.height / 2,
         ];
         const target: [number, number] = [
           origTarget.state.rect.x,
-          origTarget.state.rect.y +
-            origTarget.state.rect.height +
-            lineWidth(origTarget) / 2,
+          origTarget.state.rect.y + origTarget.state.rect.height / 2,
         ];
         return linkShape({ source, target });
       });

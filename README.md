@@ -1,43 +1,65 @@
-# markmap
+# markmap-nomad
 
-[![Join the chat at https://gitter.im/gera2ld/markmap](https://badges.gitter.im/gera2ld/markmap.svg)](https://gitter.im/gera2ld/markmap?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+A read-only mind-map viewer based on [Markmap](https://github.com/markmap/markmap), with a NotebookLM-style layout and presentation.
 
-Visualize your Markdown as mindmaps.
-
-This project is heavily inspired by [dundalek's markmap](https://github.com/dundalek/markmap).
-
-## NOMAD Viewer
-
-This fork includes a NotebookLM-style, read-only viewer with Markdown categories, search, folding, and depth/category color modes.
-
-Install the package from the GitHub release:
+## Install
 
 ```sh
-npm install https://github.com/paco-barreras/markmap-nomad/releases/download/v0.2.1/markmap-nomad-0.2.1.tgz
+npm install github:paco-barreras/markmap-nomad#v0.3.0
 ```
 
-Create `map.html` directly from `map.md`:
+## Standalone HTML
+
+Create `map.md`, then run:
 
 ```sh
-npx --yes --package=https://github.com/paco-barreras/markmap-nomad/releases/download/v0.2.1/markmap-nomad-0.2.1.tgz markmap-nomad map.md
+npx markmap-nomad map.md
 ```
 
-See [QUICKSTART.md](QUICKSTART.md) and [the package README](packages/markmap-nomad/README.md).
+Open the generated `map.html`. Use `-o output.html` to choose another filename.
 
-👉 [Try it out](https://markmap.js.org/repl).
+## Application
 
-## Related Projects
+```ts
+import { createMindMap } from 'markmap-nomad';
+import 'markmap-nomad/style.css';
+import markdown from './map.md?raw';
 
-Markmap is also available in:
+void createMindMap({ target: '#mindmap', markdown });
+```
 
-- [VSCode](https://marketplace.visualstudio.com/items?itemName=gera2ld.markmap-vscode) and [Open VSX](https://open-vsx.org/extension/gera2ld/markmap-vscode)
-- Vim / Neovim:
-  - [coc-markmap](https://github.com/gera2ld/coc-markmap) ![NPM](https://img.shields.io/npm/v/coc-markmap.svg) - powered by [coc.nvim](https://github.com/neoclide/coc.nvim)
-  - [markmap.vim](https://github.com/Zeioth/markmap.nvim): for using without [coc.nvim](https://github.com/neoclide/coc.nvim)
-- Emacs: [eaf-markmap](https://github.com/emacs-eaf/eaf-markmap) -- powered by [EAF](https://github.com/emacs-eaf/emacs-application-framework)
-- MCP Server: [markmap-mcp-server](https://github.com/jinzcdev/markmap-mcp-server) [![NPM Version](https://img.shields.io/npm/v/@jinzcdev/markmap-mcp-server.svg)](https://www.npmjs.com/package/@jinzcdev/markmap-mcp-server) - powered by [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk)
-- AI agents: [mindmap-skills](https://github.com/galiacheng/mindmap-skills) - generate an interactive Markmap from a file, URL, or topic, without leaving your AI agent
+```html
+<div id="mindmap" style="width: 100vw; height: 100vh"></div>
+```
 
-## Usage
+## Categories
 
-👉 [Read the documentation](https://markmap.js.org/docs) for more detail.
+Define categories in YAML front matter and assign them with trailing `#cat/<name>` tags:
+
+```markdown
+---
+markmap:
+  colorBy: category
+  categories:
+    research:
+      label: Research
+      color: '#2f73bd'
+      fill: '#cfe2f3'
+---
+
+# Project
+
+## Research #cat/research
+
+### Reports
+
+### Data
+
+## Notes #cat/unassigned
+```
+
+Categories are inherited by descendants. A later tag overrides the inherited category. `#cat/unassigned` resets a branch. `colorBy: depth` uses depth colors; `colorBy: category` uses category colors. Category stripes always use the category color.
+
+## Markmap
+
+This fork is based on [Markmap](https://github.com/markmap/markmap).

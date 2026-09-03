@@ -1,11 +1,2 @@
-node_modules
+node_modules/
 *.log
-/.idea
-/api
-/prototype-dist
-/*.tgz
-packages/*/dist
-.nyc_output/
-packages/*/coverage
-packages/*/types
-*.tsbuildinfo

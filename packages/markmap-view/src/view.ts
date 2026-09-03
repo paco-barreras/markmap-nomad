@@ -67,6 +67,8 @@ export class Markmap {
 
   zoom: d3.ZoomBehavior<SVGElement, INode>;
 
+  renderHooks = new Hook<[]>();
+
   private _observer: ResizeObserver;
 
   private _disposeList: (() => void)[] = [];
@@ -257,33 +259,25 @@ export class Markmap {
       };
     });
 
-    const widthsByDepth = new Map<number, number>();
+    const widthsByDepth: number[] = [];
     fnodes.forEach((fnode) => {
       const { width } = fnode.data.state.rect;
       const controlWidth = fnode.data.children?.length
         ? CONTROL_OFFSET + CONTROL_RADIUS
         : 0;
-      widthsByDepth.set(
-        fnode.depth,
-        Math.max(widthsByDepth.get(fnode.depth) || 0, width + controlWidth),
+      widthsByDepth[fnode.depth] = Math.max(
+        widthsByDepth[fnode.depth] || 0,
+        width + controlWidth,
       );
     });
 
-    const xByDepth = new Map<number, number>([[0, 0]]);
-    for (
-      let depth = 1;
-      depth <= max(fnodes, (fnode) => fnode.depth)!;
-      depth += 1
-    ) {
-      xByDepth.set(
-        depth,
-        xByDepth.get(depth - 1)! +
-          (widthsByDepth.get(depth - 1) || 0) +
-          spacingHorizontal,
-      );
+    const xByDepth = [0];
+    for (let depth = 1; depth < widthsByDepth.length; depth += 1) {
+      xByDepth[depth] =
+        xByDepth[depth - 1] + widthsByDepth[depth - 1] + spacingHorizontal;
     }
     fnodes.forEach((fnode) => {
-      fnode.data.state.rect.x = xByDepth.get(fnode.depth) || 0;
+      fnode.data.state.rect.x = xByDepth[fnode.depth];
     });
 
     this.state.rect = {
@@ -350,7 +344,8 @@ export class Markmap {
   }
 
   async renderData(originData?: INode) {
-    const { paddingX, autoFit, color, maxWidth, lineWidth } = this.options;
+    const { paddingX, autoFit, color, circleFill, maxWidth, lineWidth } =
+      this.options;
     const rootNode = this.state.data;
     if (!rootNode) return;
 
@@ -419,7 +414,7 @@ export class Markmap {
     });
     const mmGMerge = mmG
       .merge(mmGEnter)
-      .attr('data-node-id', (d) => `${d.payload?.id || d.state.path}`)
+      .attr('data-node-id', (d) => `${d.payload?.id ?? d.state.path}`)
       .attr('role', 'treeitem')
       .attr('aria-level', (d) => d.state.depth)
       .attr('aria-expanded', (d) =>
@@ -466,9 +461,11 @@ export class Markmap {
       .merge(mmCircle)
       .attr('stroke', (d) => color(d))
       .attr('fill', (d) =>
-        d.payload?.fold && d.children
-          ? color(d)
-          : 'var(--markmap-circle-open-bg)',
+        circleFill
+          ? circleFill(d)
+          : d.payload?.fold && d.children
+            ? color(d)
+            : 'var(--markmap-circle-open-bg)',
       );
 
     const mmToggle = mmGMerge
@@ -490,7 +487,7 @@ export class Markmap {
       .attr('stroke-linejoin', 'round')
       .attr('pointer-events', 'none')
       .merge(mmToggle)
-      .attr('stroke', (d) => (d.payload?.fold ? '#ffffff' : color(d)));
+      .attr('stroke', (d) => color(d));
 
     const observer = this._observer;
     const mmFo = mmGMerge
@@ -553,8 +550,8 @@ export class Markmap {
       .attr('d', (d) => {
         const originRect = getOriginSourceRect(d.target);
         const pathOrigin: [number, number] = [
-          originRect.x + originRect.width,
-          originRect.y + originRect.height,
+          originRect.x + originRect.width + CONTROL_OFFSET,
+          originRect.y + originRect.height / 2,
         ];
         return linkShape({ source: pathOrigin, target: pathOrigin });
       })
@@ -565,7 +562,7 @@ export class Markmap {
       '--markmap-max-width',
       maxWidth ? `${maxWidth}px` : (null as any),
     );
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await new Promise(requestAnimationFrame);
     // Note: d.state.rect is only available after relayout
     this._relayout();
 
@@ -672,6 +669,7 @@ export class Markmap {
         return linkShape({ source, target });
       });
 
+    this.renderHooks.call();
     if (autoFit) this.fit();
   }
 
@@ -826,6 +824,10 @@ export class Markmap {
   }
 
   destroy() {
+    this.renderHooks.revokeAll();
+    this.svg.interrupt();
+    this.g.interrupt();
+    this.g.selectAll('*').interrupt();
     this.svg.on('.zoom', null);
     this.svg.html(null);
     this._disposeList.forEach((fn) => {

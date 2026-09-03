@@ -1,10 +1,16 @@
 import { parse } from 'yaml';
+import {
+  deriveOptions,
+  type IMarkmapJSONOptions,
+  type IMarkmapOptions,
+} from 'markmap-view';
 import type {
   MindMapCategory,
   MindMapDepthColor,
   MindMapNode,
   MindMapViewerConfig,
   ResolvedMindMapDocument,
+  ResolvedMindMapSettings,
 } from './types';
 
 const defaultDepthColors: MindMapDepthColor[] = [
@@ -17,7 +23,7 @@ const defaultDepthColors: MindMapDepthColor[] = [
 
 const defaultUnassigned: MindMapCategory = {
   label: 'Unassigned',
-  stripe: '#a6a6a6',
+  color: '#a6a6a6',
   fill: '#d9d9d9',
 };
 
@@ -43,6 +49,7 @@ const topLevelKeys = new Set([
 ]);
 const viewerKeys = new Set(Object.keys(defaultViewer));
 const nodeKeys = new Set(['label', 'category', 'children']);
+type ViewerKey = keyof Required<MindMapViewerConfig>;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === 'object' && !Array.isArray(value);
@@ -63,13 +70,37 @@ function parseCategory(key: string, value: unknown): MindMapCategory {
     throw new Error(`Invalid category key: ${key}`);
   }
   if (!isRecord(value)) throw new Error(`Category ${key} must be an object`);
-  assertKeys(value, new Set(['label', 'stripe', 'fill']), `categories.${key}`);
-  for (const field of ['label', 'stripe', 'fill'] as const) {
-    if (typeof value[field] !== 'string' || !value[field]) {
-      throw new Error(`categories.${key}.${field} must be a string`);
-    }
+  assertKeys(value, new Set(['label', 'color', 'fill']), `categories.${key}`);
+  if (typeof value.label !== 'string' || !value.label.trim()) {
+    throw new Error(`categories.${key}.label must be a non-empty string`);
   }
-  return value as unknown as MindMapCategory;
+  return {
+    label: value.label.trim(),
+    color: parseColor(value.color, `categories.${key}.color`),
+    fill: parseColor(value.fill, `categories.${key}.fill`),
+  };
+}
+
+function parseColor(value: unknown, at: string) {
+  if (
+    typeof value !== 'string' ||
+    !/^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(value)
+  ) {
+    throw new Error(`${at} must be a 3- or 6-digit hex color`);
+  }
+  return value;
+}
+
+function parseCategories(value: unknown): Record<string, MindMapCategory> {
+  const categories: Record<string, MindMapCategory> = {};
+  if (value !== undefined) {
+    if (!isRecord(value)) throw new Error('categories must be an object');
+    Object.entries(value).forEach(([key, category]) => {
+      categories[key] = parseCategory(key, category);
+    });
+  }
+  categories.unassigned ||= { ...defaultUnassigned };
+  return categories;
 }
 
 function parseDepthColors(value: unknown): MindMapDepthColor[] {
@@ -80,11 +111,50 @@ function parseDepthColors(value: unknown): MindMapDepthColor[] {
     if (!isRecord(item))
       throw new Error(`depthColors[${index}] must be an object`);
     assertKeys(item, new Set(['fill', 'accent']), `depthColors[${index}]`);
-    if (typeof item.fill !== 'string' || typeof item.accent !== 'string') {
-      throw new Error(`depthColors[${index}] requires fill and accent strings`);
-    }
-    return { fill: item.fill, accent: item.accent };
+    return {
+      fill: parseColor(item.fill, `depthColors[${index}].fill`),
+      accent: parseColor(item.accent, `depthColors[${index}].accent`),
+    };
   });
+}
+
+function resolveDepthColors(value: unknown) {
+  return value === undefined
+    ? defaultDepthColors.map((color) => ({ ...color }))
+    : parseDepthColors(value);
+}
+
+function parseColorMode(value: unknown, at = 'colorBy') {
+  if (value === undefined || value === 'depth') return 'depth';
+  if (value === 'category') return 'category';
+  throw new Error(`${at} must be depth or category`);
+}
+
+function pickViewerOptions(options: Partial<IMarkmapOptions>) {
+  const viewer: MindMapViewerConfig = {};
+  Object.keys(defaultViewer).forEach((key) => {
+    const viewerKey = key as ViewerKey;
+    if (options[viewerKey] !== undefined) {
+      Object.assign(viewer, { [viewerKey]: options[viewerKey] });
+    }
+  });
+  return viewer;
+}
+
+function parseViewerOptions(value: unknown): MindMapViewerConfig {
+  if (value === undefined) return {};
+  if (!isRecord(value)) throw new Error('viewer must be an object');
+  assertKeys(value, viewerKeys, 'viewer');
+  Object.entries(value).forEach(([key, option]) => {
+    const expected = defaultViewer[key as ViewerKey];
+    if (
+      typeof option !== typeof expected ||
+      (typeof option === 'number' && !Number.isFinite(option))
+    ) {
+      throw new Error(`viewer.${key} must be a ${typeof expected}`);
+    }
+  });
+  return value as MindMapViewerConfig;
 }
 
 function parseNode(
@@ -97,10 +167,11 @@ function parseNode(
   if (typeof value.label !== 'string' || !value.label.trim()) {
     throw new Error(`${at}.label must be a non-empty string`);
   }
-  if (value.category !== undefined) {
-    if (typeof value.category !== 'string' || !categories[value.category]) {
+  const category = value.category;
+  if (category !== undefined) {
+    if (typeof category !== 'string' || !categories[category]) {
       throw new Error(
-        `${at}.category references an unknown category: ${value.category}`,
+        `${at}.category references an unknown category: ${category}`,
       );
     }
   }
@@ -109,7 +180,7 @@ function parseNode(
   }
   return {
     label: value.label.trim(),
-    category: value.category as string | undefined,
+    category,
     children: (value.children || []).map((child, index) =>
       parseNode(child, categories, `${at}.children[${index}]`),
     ),
@@ -122,36 +193,9 @@ export function parseMindMapYaml(input: string): ResolvedMindMapDocument {
   if (!isRecord(raw)) throw new Error('Mind map YAML must be an object');
   assertKeys(raw, topLevelKeys, 'top-level');
 
-  if (
-    raw.colorBy !== undefined &&
-    raw.colorBy !== 'depth' &&
-    raw.colorBy !== 'category'
-  ) {
-    throw new Error('colorBy must be depth or category');
-  }
+  const categories = parseCategories(raw.categories);
 
-  const categories: Record<string, MindMapCategory> = {};
-  if (raw.categories !== undefined) {
-    if (!isRecord(raw.categories))
-      throw new Error('categories must be an object');
-    Object.entries(raw.categories).forEach(([key, value]) => {
-      if (key !== 'unassigned') categories[key] = parseCategory(key, value);
-    });
-    if (raw.categories.unassigned !== undefined) {
-      categories.unassigned = parseCategory(
-        'unassigned',
-        raw.categories.unassigned,
-      );
-    }
-  }
-  categories.unassigned ||= defaultUnassigned;
-
-  let viewer: MindMapViewerConfig = {};
-  if (raw.viewer !== undefined) {
-    if (!isRecord(raw.viewer)) throw new Error('viewer must be an object');
-    assertKeys(raw.viewer, viewerKeys, 'viewer');
-    viewer = raw.viewer as MindMapViewerConfig;
-  }
+  const viewer = parseViewerOptions(raw.viewer);
 
   if (raw.tree === undefined) throw new Error('tree is required');
   const tree = parseNode(raw.tree, categories, 'tree');
@@ -161,13 +205,34 @@ export function parseMindMapYaml(input: string): ResolvedMindMapDocument {
       typeof raw.title === 'string' && raw.title.trim()
         ? raw.title.trim()
         : tree.label,
-    colorBy: raw.colorBy === 'category' ? 'category' : 'depth',
-    depthColors:
-      raw.depthColors === undefined
-        ? defaultDepthColors.map((color) => ({ ...color }))
-        : parseDepthColors(raw.depthColors),
+    colorBy: parseColorMode(raw.colorBy),
+    depthColors: resolveDepthColors(raw.depthColors),
     categories,
     viewer: { ...defaultViewer, ...viewer },
     tree,
+  };
+}
+
+export function parseMarkdownMindMapConfig(
+  frontmatter: unknown,
+  fallbackTitle: string,
+): ResolvedMindMapSettings {
+  const root = isRecord(frontmatter) ? frontmatter : {};
+  const markmap = isRecord(root.markmap) ? root.markmap : {};
+  const categories = parseCategories(markmap.categories);
+
+  const viewer = pickViewerOptions(
+    deriveOptions(markmap as Partial<IMarkmapJSONOptions>),
+  );
+
+  return {
+    title:
+      typeof root.title === 'string' && root.title.trim()
+        ? root.title.trim()
+        : fallbackTitle,
+    colorBy: parseColorMode(markmap.colorBy, 'markmap.colorBy'),
+    depthColors: resolveDepthColors(markmap.depthColors),
+    categories,
+    viewer: { ...defaultViewer, ...viewer },
   };
 }

@@ -221,13 +221,25 @@ importers:
         version: 1.6.28
 
   packages/markmap-nomad:
-    dependencies:
+    devDependencies:
+      del-cli:
+        specifier: ^6.0.0
+        version: 6.0.0
       markmap-common:
         specifier: workspace:*
         version: link:../markmap-common
+      markmap-lib:
+        specifier: workspace:*
+        version: link:../markmap-lib
       markmap-view:
         specifier: workspace:*
         version: link:../markmap-view
+      typescript:
+        specifier: ^5.8.3
+        version: 5.8.3
+      vite:
+        specifier: ^6.3.5
+        version: 6.3.5(@types/node@24.0.1)(jiti@2.4.2)(tsx@4.19.2)(yaml@2.8.0)
       yaml:
         specifier: ^2.5.1
         version: 2.6.1

@@ -1,39 +1,52 @@
-# Create a mind map
+# Use markmap-nomad in another project
 
-## 1. Edit the YAML
+## Install
 
-Replace `prototype/NOMAD.yaml` with your tree:
-
-```yaml
-title: My mind map
-colorBy: depth
-
-tree:
-  label: Main topic
-  children:
-    - label: First branch
-      children:
-        - label: Child node
-    - label: Second branch
-```
-
-Each node needs `label`. It may also have `children` and `category`. See `prototype/NOMAD.yaml` for category and color examples. A category is inherited by its children.
-
-## 2. Preview
-
-From the repository root:
+Until the package is published, create its self-contained tarball once:
 
 ```powershell
-corepack pnpm install
-corepack pnpm run prototype
+# In the markmap-nomad repository
+npm run package:pack
 ```
 
-Open the URL printed in the terminal.
-
-## 3. Build HTML
+Give `markmap-nomad-0.2.0.tgz` to the consuming project, then install it there:
 
 ```powershell
-corepack pnpm run prototype:build
+npm install C:\path\to\markmap-nomad-0.2.0.tgz
 ```
 
-The result is `prototype-dist/index.html`. Keep the generated `prototype-dist/assets` directory beside it; publish or copy the entire `prototype-dist` folder.
+After publication, use `npm install markmap-nomad` instead. Consumers do not need the monorepo or separate Markmap packages.
+
+## Add a note
+
+Create `src/map.md`:
+
+```markdown
+# Main topic
+
+## First branch
+
+### Child node
+
+## Second branch
+```
+
+## Render it
+
+In a Vite entry file:
+
+```ts
+import { createMindMap } from 'markmap-nomad';
+import 'markmap-nomad/style.css';
+import markdown from './map.md?raw';
+
+void createMindMap({ target: '#mindmap', markdown });
+```
+
+Add a sized container to the page:
+
+```html
+<div id="mindmap" style="width: 100vw; height: 100vh"></div>
+```
+
+Run or build the consuming project normally. Category configuration and `#cat/name` syntax are documented in the package README.

@@ -4,20 +4,20 @@ colorBy: depth
 categories:
   accessing:
     label: Accessing data
-    stripe: "#2f73bd"
-    fill: "#cfe2f3"
+    color: '#2f73bd'
+    fill: '#cfe2f3'
   learning:
     label: Discovering and learning
-    stripe: "#76a938"
-    fill: "#d9ead3"
+    color: '#76a938'
+    fill: '#d9ead3'
   services:
     label: Data platform and services
-    stripe: "#bf9000"
-    fill: "#fff2cc"
+    color: '#bf9000'
+    fill: '#fff2cc'
   sustainability:
     label: Sustainability
-    stripe: "#6c3bb7"
-    fill: "#d9d2e9"
+    color: '#6c3bb7'
+    fill: '#d9d2e9'
 
 viewer:
   initialExpandLevel: 2
@@ -88,7 +88,7 @@ tree:
         - label: Processing methods tab
           category: services
           children:
-            - label: "Pipeline stages: description and visual"
+            - label: 'Pipeline stages: description and visual'
             - label: Open-source software and toolkits
               children:
                 - label: Tool name and description
@@ -97,7 +97,7 @@ tree:
         - label: Literature tab
           category: learning
           children:
-            - label: "Filter bar: keyword and topic"
+            - label: 'Filter bar: keyword and topic'
             - label: Literature catalog cards
               children:
                 - label: Paper title

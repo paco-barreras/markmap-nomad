@@ -3,6 +3,7 @@ node_modules
 /.idea
 /api
 /prototype-dist
+/*.tgz
 packages/*/dist
 .nyc_output/
 packages/*/coverage

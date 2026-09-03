@@ -1,6 +1,6 @@
-# YAML-driven demo
+# Markdown-driven demo
 
-Edit `NOMAD.yaml`. It contains the tree, title, categories, palette, and viewer settings.
+Edit `NOMAD.md`. Its YAML front matter defines categories and its headings define the tree. `NOMAD.yaml` demonstrates the alternative structured-tree input.
 
 Run from the repository root:
 
@@ -8,4 +8,4 @@ Run from the repository root:
 corepack pnpm run prototype
 ```
 
-The application code in `app.ts` only loads that file and calls `createMindMap()`.
+The application code in `app.ts` only loads the Markdown file and calls `createMindMap()`.

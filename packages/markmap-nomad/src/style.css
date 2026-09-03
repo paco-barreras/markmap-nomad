@@ -163,7 +163,7 @@
   border: 1px solid rgb(54 72 86 / 10%);
   border-left: 4px solid var(--category-color, #a6a6a6);
   border-radius: 7px;
-  background: var(--node-fill, #d9d9d9);
+  background: var(--depth-fill, #d9d9d9);
   box-shadow: 0 2px 7px rgb(28 43 55 / 10%);
   color: #13222e;
   line-height: 1.28;
@@ -175,7 +175,11 @@
     opacity 150ms ease;
 }
 
-.markmap-nomad-host .nomad-card.depth-0 {
+.markmap-nomad-host.color-by-category .nomad-card {
+  background: var(--category-fill, #d9d9d9);
+}
+
+.markmap-nomad-host .nomad-card-root {
   min-width: 160px;
   min-height: 44px;
   color: #17212b;
@@ -183,7 +187,7 @@
   font-weight: 500;
 }
 
-.markmap-nomad-host .nomad-card.depth-1 {
+.markmap-nomad-host .nomad-card-primary {
   font-size: 15px;
   font-weight: 500;
 }
@@ -233,6 +237,10 @@
   left: 18px;
   align-items: stretch;
   gap: 10px;
+}
+
+.markmap-nomad-host .map-key[hidden] {
+  display: none;
 }
 
 .markmap-nomad-host .legend {

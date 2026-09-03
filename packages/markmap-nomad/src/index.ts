@@ -1,5 +1,14 @@
 import './style.css';
 
-export * from './config';
-export * from './mindmap';
-export * from './types';
+export { createMindMap } from './mindmap';
+export type {
+  ColorMode,
+  CreateMindMapOptions,
+  MindMapCategory,
+  MindMapController,
+  MindMapDepthColor,
+  MindMapDocument,
+  MindMapNode,
+  MindMapSource,
+  MindMapViewerConfig,
+} from './types';

@@ -9,8 +9,5 @@ export default defineConfig({
       formats: ['es'],
       cssFileName: 'style',
     },
-    rollupOptions: {
-      external: ['markmap-common', 'markmap-view', 'yaml'],
-    },
   },
 });

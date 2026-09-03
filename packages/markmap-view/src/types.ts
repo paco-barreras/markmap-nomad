@@ -50,6 +50,7 @@ export interface IMarkmapOptions {
 
   // Theme options
   color: (node: INode) => string;
+  circleFill?: (node: INode) => string;
   lineWidth: (node: INode) => number;
   maxWidth: number;
   nodeMinHeight: number;

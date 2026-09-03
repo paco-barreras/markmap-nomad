@@ -1,10 +1,69 @@
 # markmap-nomad
 
-Render a read-only, NotebookLM-style mind map from one YAML document.
+Render a read-only, NotebookLM-style mind map from Markdown or a structured YAML tree.
+
+## Install
+
+```sh
+npm install markmap-nomad
+```
+
+The package is self-contained; no separate Markmap packages are required. Until the first npm release, install the tarball produced by `npm run package:pack` in this repository.
+
+## Markdown input
+
+Any Markmap-style heading or list hierarchy works. Put category definitions in YAML front matter and add a trailing `#cat/name` only where a category begins:
+
+```markdown
+---
+title: Project map
+markmap:
+  colorBy: depth
+  initialExpandLevel: 2
+  categories:
+    data:
+      label: Data
+      color: '#2f73bd'
+      fill: '#cfe2f3'
+    people:
+      label: People
+      color: '#6c3bb7'
+      fill: '#d9d2e9'
+---
+
+# Project
+
+## Data #cat/data
+
+### Catalog
+
+### Downloads
+
+## About
+
+### Team #cat/people
+
+#### Researchers
+```
+
+The tag is removed from the displayed label. Descendants inherit the category; a deeper tag overrides it. Use `#cat/unassigned` to reset inheritance. Category names are lowercase slugs and unknown names produce an error.
+
+The same syntax works in lists:
+
+```markdown
+- Data #cat/data
+  - Catalog
+- About
+  - Team #cat/people
+```
+
+```ts
+const controller = await createMindMap({ target: '#mindmap-app', markdown });
+```
 
 ## YAML input
 
-The tree and its presentation settings live together:
+For a structured tree instead of a note:
 
 ```yaml
 title: Project map
@@ -13,12 +72,12 @@ colorBy: depth
 categories:
   data:
     label: Data
-    stripe: "#2f73bd"
-    fill: "#cfe2f3"
+    color: '#2f73bd'
+    fill: '#cfe2f3'
   people:
     label: People
-    stripe: "#6c3bb7"
-    fill: "#d9d2e9"
+    color: '#6c3bb7'
+    fill: '#d9d2e9'
 
 viewer:
   initialExpandLevel: 2
@@ -57,7 +116,7 @@ The returned controller provides:
 
 ```ts
 controller.getColorMode();
-controller.setColorMode('category');
+await controller.setColorMode('category');
 await controller.expandAll();
 await controller.collapseAll();
 await controller.fit();
@@ -66,21 +125,15 @@ await controller.clearSelection();
 controller.destroy();
 ```
 
-Use `prepareMindMap(yaml)` when validated tree data is needed without rendering:
-
-```ts
-const { title, root, config } = prepareMindMap(yaml);
-```
-
 ## YAML fields
 
 - `title`: displayed map title; defaults to `tree.label`.
 - `colorBy`: `depth` or `category`; defaults to `depth`.
-- `categories`: named category definitions with `label`, `stripe`, and `fill`.
+- `categories`: named category definitions with `label`, `color`, and `fill`.
 - `depthColors`: optional list of `{ fill, accent }` depth colors.
 - `viewer`: optional renderer settings.
 - `tree`: one root node containing `label`, optional `category`, and optional `children`.
 
 Supported `viewer` settings are `duration`, `fitRatio`, `initialExpandLevel`, `maxInitialScale`, `maxWidth`, `pan`, `spacingHorizontal`, `spacingVertical`, and `zoom`.
 
-Node labels are escaped and rendered as plain text.
+YAML node labels are escaped and rendered as plain text. Markdown nodes retain the inline formatting supported by Markmap; only use trusted Markdown input.

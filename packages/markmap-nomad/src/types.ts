@@ -1,6 +1,3 @@
-import type { IPureNode } from 'markmap-common';
-import type { IMarkmapOptions, Markmap } from 'markmap-view';
-
 export type ColorMode = 'depth' | 'category';
 
 export interface MindMapDepthColor {
@@ -10,7 +7,7 @@ export interface MindMapDepthColor {
 
 export interface MindMapCategory {
   label: string;
-  stripe: string;
+  color: string;
   fill: string;
 }
 
@@ -20,20 +17,17 @@ export interface MindMapNode {
   children?: MindMapNode[];
 }
 
-export type MindMapViewerConfig = Partial<
-  Pick<
-    IMarkmapOptions,
-    | 'duration'
-    | 'fitRatio'
-    | 'initialExpandLevel'
-    | 'maxInitialScale'
-    | 'maxWidth'
-    | 'pan'
-    | 'spacingHorizontal'
-    | 'spacingVertical'
-    | 'zoom'
-  >
->;
+export interface MindMapViewerConfig {
+  duration?: number;
+  fitRatio?: number;
+  initialExpandLevel?: number;
+  maxInitialScale?: number;
+  maxWidth?: number;
+  pan?: boolean;
+  spacingHorizontal?: number;
+  spacingVertical?: number;
+  zoom?: boolean;
+}
 
 export interface MindMapDocument {
   title?: string;
@@ -44,30 +38,29 @@ export interface MindMapDocument {
   tree: MindMapNode;
 }
 
-export interface ResolvedMindMapDocument {
+export interface ResolvedMindMapSettings {
   title: string;
   colorBy: ColorMode;
   depthColors: MindMapDepthColor[];
   categories: Record<string, MindMapCategory>;
   viewer: Required<MindMapViewerConfig>;
+}
+
+export interface ResolvedMindMapDocument extends ResolvedMindMapSettings {
   tree: MindMapNode;
 }
 
-export interface CreateMindMapOptions {
-  target: string | HTMLElement;
-  yaml: string;
-}
+export type MindMapSource =
+  | { markdown: string; yaml?: never }
+  | { markdown?: never; yaml: string };
 
-export interface PreparedMindMap {
-  title: string;
-  root: IPureNode;
-  config: ResolvedMindMapDocument;
-}
+export type CreateMindMapOptions = MindMapSource & {
+  target: string | HTMLElement;
+};
 
 export interface MindMapController {
-  readonly viewer: Markmap;
   getColorMode(): ColorMode;
-  setColorMode(mode: ColorMode): void;
+  setColorMode(mode: ColorMode): Promise<void>;
   expandAll(): Promise<void>;
   collapseAll(): Promise<void>;
   fit(): Promise<void>;

@@ -1,23 +1,16 @@
 # Use markmap-nomad in another project
 
-## Install
+This example works in a Vite application. You do not need to clone the markmap-nomad repository.
 
-Until the package is published, create its self-contained tarball once:
+## 1. Install
 
-```powershell
-# In the markmap-nomad repository
-npm run package:pack
+```sh
+npm install https://github.com/paco-barreras/markmap-nomad/releases/download/v0.2.0/markmap-nomad-0.2.0.tgz
 ```
 
-Give `markmap-nomad-0.2.0.tgz` to the consuming project, then install it there:
+The package is self-contained. Do not install Markmap separately.
 
-```powershell
-npm install C:\path\to\markmap-nomad-0.2.0.tgz
-```
-
-After publication, use `npm install markmap-nomad` instead. Consumers do not need the monorepo or separate Markmap packages.
-
-## Add a note
+## 2. Add a note
 
 Create `src/map.md`:
 
@@ -31,9 +24,15 @@ Create `src/map.md`:
 ## Second branch
 ```
 
-## Render it
+## 3. Render the note
 
-In a Vite entry file:
+Add a sized container:
+
+```html
+<div id="mindmap" style="width: 100vw; height: 100vh"></div>
+```
+
+Then use it in your JavaScript or TypeScript entry file:
 
 ```ts
 import { createMindMap } from 'markmap-nomad';
@@ -43,10 +42,4 @@ import markdown from './map.md?raw';
 void createMindMap({ target: '#mindmap', markdown });
 ```
 
-Add a sized container to the page:
-
-```html
-<div id="mindmap" style="width: 100vw; height: 100vh"></div>
-```
-
-Run or build the consuming project normally. Category configuration and `#cat/name` syntax are documented in the package README.
+Run or build your application normally. See the package README for categories and YAML input.

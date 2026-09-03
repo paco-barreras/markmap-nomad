@@ -5,10 +5,10 @@ Render a read-only, NotebookLM-style mind map from Markdown or a structured YAML
 ## Install
 
 ```sh
-npm install markmap-nomad
+npm install https://github.com/paco-barreras/markmap-nomad/releases/download/v0.2.0/markmap-nomad-0.2.0.tgz
 ```
 
-The package is self-contained; no separate Markmap packages are required. Until the first npm release, install the tarball produced by `npm run package:pack` in this repository.
+The package is self-contained; no repository clone or separate Markmap packages are required.
 
 ## Markdown input
 

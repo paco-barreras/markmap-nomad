@@ -74,6 +74,7 @@ export async function createMindMap(
   colorInput.checked = colorMode === 'category';
 
   await document.fonts.ready;
+  const duration = config.viewer.duration;
   const viewer = new markmapView.Markmap(svg, {
     autoFit: false,
     embedGlobalCSS: true,
@@ -85,6 +86,7 @@ export async function createMindMap(
     color: nodeAccent,
     circleFill: nodeFill,
     ...config.viewer,
+    duration: 0,
   });
 
   function updateNodeClasses() {
@@ -270,6 +272,7 @@ export async function createMindMap(
     },
   };
   activeControllers.set(target, controller);
-  void viewer.fit(1);
+  await viewer.fit(1);
+  viewer.setOptions({ duration });
   return controller;
 }

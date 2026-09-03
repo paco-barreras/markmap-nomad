@@ -1,6 +1,6 @@
 {
   "name": "markmap-nomad",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "NotebookLM-style read-only mind maps from Markdown or YAML",
   "license": "MIT",
   "keywords": [
@@ -22,6 +22,9 @@
     "access": "public"
   },
   "type": "module",
+  "bin": {
+    "markmap-nomad": "cli.mjs"
+  },
   "main": "dist/index.js",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -33,6 +36,7 @@
     "./style.css": "./dist/style.css"
   },
   "files": [
+    "cli.mjs",
     "dist"
   ],
   "scripts": {

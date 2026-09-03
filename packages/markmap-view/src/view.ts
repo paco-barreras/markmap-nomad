@@ -5,6 +5,7 @@ import {
   min,
   minIndex,
   select,
+  timerFlush,
   zoom,
   zoomIdentity,
   zoomTransform,
@@ -562,7 +563,13 @@ export class Markmap {
       '--markmap-max-width',
       maxWidth ? `${maxWidth}px` : (null as any),
     );
-    await new Promise(requestAnimationFrame);
+    await new Promise<void>((resolve) => {
+      const timeout = window.setTimeout(resolve, 100);
+      requestAnimationFrame(() => {
+        clearTimeout(timeout);
+        resolve();
+      });
+    });
     // Note: d.state.rect is only available after relayout
     this._relayout();
 
@@ -669,6 +676,7 @@ export class Markmap {
         return linkShape({ source, target });
       });
 
+    if (!this.options.duration) timerFlush();
     this.renderHooks.call();
     if (autoFit) this.fit();
   }
@@ -702,10 +710,12 @@ export class Markmap {
         (offsetHeight - naturalHeight * scale) / 2 - y1 * scale,
       )
       .scale(scale);
-    return this.transition(this.svg)
-      .call(this.zoom.transform, initialZoom)
-      .end()
-      .catch(noop);
+    const transition = this.transition(this.svg).call(
+      this.zoom.transform,
+      initialZoom,
+    );
+    if (!this.options.duration) timerFlush();
+    return transition.end().catch(noop);
   }
 
   findElement(node: INode) {

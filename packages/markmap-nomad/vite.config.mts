@@ -5,8 +5,9 @@ export default defineConfig({
     emptyOutDir: false,
     lib: {
       entry: 'src/index.ts',
-      fileName: 'index',
-      formats: ['es'],
+      name: 'MarkmapNomad',
+      fileName: (format) => (format === 'iife' ? 'index.iife.js' : 'index.js'),
+      formats: ['es', 'iife'],
       cssFileName: 'style',
     },
   },

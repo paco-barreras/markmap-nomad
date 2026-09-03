@@ -10,13 +10,19 @@ This project is heavily inspired by [dundalek's markmap](https://github.com/dund
 
 This fork includes a NotebookLM-style, read-only viewer with Markdown categories, search, folding, and depth/category color modes.
 
-Install the self-contained package from the GitHub release:
+Install the package from the GitHub release:
 
 ```sh
-npm install https://github.com/paco-barreras/markmap-nomad/releases/download/v0.2.0/markmap-nomad-0.2.0.tgz
+npm install https://github.com/paco-barreras/markmap-nomad/releases/download/v0.2.1/markmap-nomad-0.2.1.tgz
 ```
 
-See [QUICKSTART.md](QUICKSTART.md) for the minimal setup and [the package README](packages/markmap-nomad/README.md) for category syntax and API details.
+Create `map.html` directly from `map.md`:
+
+```sh
+npx --yes --package=https://github.com/paco-barreras/markmap-nomad/releases/download/v0.2.1/markmap-nomad-0.2.1.tgz markmap-nomad map.md
+```
+
+See [QUICKSTART.md](QUICKSTART.md) and [the package README](packages/markmap-nomad/README.md).
 
 👉 [Try it out](https://markmap.js.org/repl).
 
